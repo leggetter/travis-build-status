@@ -1,0 +1,91 @@
+<script src="//js.pusher.com/3.0.0/pusher.min.js"></script>
+
+<template id="container">
+  <style>
+    :host {
+      display: inline-block;
+    }
+  </style>
+  
+	<div class="build-status-container">
+    <header>
+		  <h1></h1>
+      <img id="travis_image" >
+    </header>
+    <section id="build_activity"></section>
+    <footer>
+      Built by <a href="https://pusher.com">Pusher</a> with 🚀
+    </footer>
+	</div>
+	
+</template>
+
+<script>
+( function( currentScript ) {
+	
+	var TRAVIS_IMG_URL_TMPL = 'https://travis-ci.org/{{owner}}/{{repo}}.svg';
+  var TRAVIS_IMG_TITLE_TMPL = 'Build status image for {{owner}}/{{repo}}';
+	
+  var importDoc = currentScript.ownerDocument;
+	
+	var pusher;
+	
+	var containerEl;
+	
+  var OSSBuildStatus = Object.create(HTMLElement.prototype);
+  OSSBuildStatus.createdCallback = function() {
+		// Get attributes
+    var appKey = this.getAttribute('pusher-app-key');
+    if(!appKey) {
+      throw new Error('A Pusher application key must be provided via the "pusher-app-key" attribute');
+    }
+    
+    var repoName = this.getAttribute('repo-name');
+    if(!repoName) {
+      throw new Error('A "repo-name" attribute must be provided');
+    }
+    
+    var repoOwner = this.getAttribute('repo-owner');
+    if(!repoOwner) {
+      throw new Error('A "repo-owner" attribute must be provided');
+    }
+    
+    var cluster = this.getAttribute('pusher-cluster');
+    var debug = this.getAttribute('debug');
+    
+		// Basic element setup
+    var containerContent = importDoc.querySelector( '#container' ).content;
+    var containerClone = importDoc.importNode( containerContent, true );
+    containerEl = containerClone.querySelector('.build-status-container');
+    
+    this.shadow = this.createShadowRoot();
+    this.shadow.appendChild( containerClone );
+    
+    var travisImgEl = containerEl.querySelector('#travis_image');
+    
+		// Pusher setup
+		if(debug !== null && debug !== 'false') {    
+      Pusher.log = function(msg) {
+        console.log(msg);
+      };
+    }
+		
+    pusher = new Pusher(appKey, {cluster: cluster});
+    
+    var travisImageUrl = TRAVIS_IMG_URL_TMPL.replace('{{owner}}', repoOwner);
+    travisImageUrl = travisImageUrl.replace('{{repo}}', repoName);
+    
+    var travisImageTitle = TRAVIS_IMG_TITLE_TMPL.replace('{{owner}}', repoOwner);
+    travisImageTitle = travisImageTitle.replace('{{repo}}', repoName);
+  
+    travisImgEl.setAttribute('src', travisImageUrl);
+    travisImgEl.setAttribute('title', travisImageTitle);
+    travisImgEl.setAttribute('alt', travisImageTitle);
+  };
+  
+  document.registerElement('oss-build-status', {
+    prototype: OSSBuildStatus
+  });
+	
+} )( document._currentScript || document.currentScript );
+</script>
