@@ -1,0 +1,15 @@
+h1 {
+	text-align: center;
+}
+
+.container {
+	display: flex;
+	flex-flow: row wrap;
+}
+
+oss-build-status {
+	flex-grow: 1;
+	margin: 20px;
+	text-align: center;
+	min-width: 300px;
+}
