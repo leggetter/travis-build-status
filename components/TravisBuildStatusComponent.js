@@ -18,10 +18,6 @@ var pusher,
 var containerEl,
     travisImgEl,
     buildActivitiesEl;
-		
-//function TravisBuildStatus(travis, pusher) {
-//	
-//}
 
 var TravisBuildStatusElement = Object.create(HTMLElement.prototype);
 TravisBuildStatusElement.createdCallback = function() {
@@ -59,95 +55,53 @@ TravisBuildStatusElement.createdCallback = function() {
   buildActivitiesEl = containerEl.querySelector('#build_activity');
   
 	// Pusher setup
-	if(debug !== null && debug !== 'false') {    
-    Pusher.log = function(msg) {
-      console.log(msg);
-    };
-  }
-	
-  pusher = new Pusher(appKey, {cluster: cluster});
-  var channelName = PUSHER_CHANNEL_NAME_TMPL.replace('{{repo}}', repoName);
-  buildChannel = pusher.subscribe(channelName);
+//	if(debug !== null && debug !== 'false') {    
+//    Pusher.log = function(msg) {
+//      console.log(msg);
+//    };
+//  }
+//	
+//  pusher = new Pusher(appKey, {cluster: cluster});
+//  var channelName = PUSHER_CHANNEL_NAME_TMPL.replace('{{repo}}', repoName);
+//  buildChannel = pusher.subscribe(channelName);
+//  
+//  buildChannel.bind('Pending', function(data) {
+//    updateTravisImage();
+//    handleActivity(data);
+//  });
+//  
+//  buildChannel.bind('Passed', function(data) {
+//    updateTravisImage();
+//    handleActivity(data);
+//  });
+//  
+//  buildChannel.bind('Fixed', function(data) {
+//    updateTravisImage();
+//    handleActivity(data);
+//  });
+//  
+//  buildChannel.bind('Broken', function(data) {
+//    updateTravisImage();
+//    handleActivity(data);
+//  });
+//  
+//  buildChannel.bind('Failed', function(data) {
+//    updateTravisImage();
+//    handleActivity(data);
+//  });
+//  
+//  buildChannel.bind('Still Failing', function(data) {
+//    // Was already failing. No need to update image.
+//    handleActivity(data);
+//  });
   
-  buildChannel.bind('Pending', function(data) {
-    updateTravisImage();
-    handleActivity(data);
-  });
-  
-  buildChannel.bind('Passed', function(data) {
-    updateTravisImage();
-    handleActivity(data);
-  });
-  
-  buildChannel.bind('Fixed', function(data) {
-    updateTravisImage();
-    handleActivity(data);
-  });
-  
-  buildChannel.bind('Broken', function(data) {
-    updateTravisImage();
-    handleActivity(data);
-  });
-  
-  buildChannel.bind('Failed', function(data) {
-    updateTravisImage();
-    handleActivity(data);
-  });
-  
-  buildChannel.bind('Still Failing', function(data) {
-    // Was already failing. No need to update image.
-    handleActivity(data);
-  });
-  
-  getPreviousActivity(repoOwner, repoName);
+  var travis = new TravisAPI(repoOwner, repoName);
+  travis.getPreviousActivity(showActivity);
 };
 
-function travisRequest(url, cb) {
-    var req = window.XDomainRequest ? new XDomainRequest() : new XMLHttpRequest();
+
   
-    if(req) {
-      req.open("GET", url, true);
-      req.onreadystatechange = function() {
-        if(req.readyState === 4 ) {
-          cb(JSON.parse(req.responseText));
-        }
-      };
-      req.setRequestHeader("Accept", "application/vnd.travis-ci.2+json");
-      req.send();
-    }
-  }
   
-  function getPreviousActivity(owner, repo) {
-    var url = 'https://api.travis-ci.org/repos/' + owner + '/' + repo;
-    travisRequest(url, function(data) {
-      console.log(data);
-      
-      var buildId = data.repo.last_build_id;
-      getBuildInfo(owner, repo, buildId);
-    });
-  }
-  
-  function getBuildInfo(owner, repo, buildId) {
-    console.log('getting build info for', owner, repo, buildId);
-    if(!buildId) return;
-    // TODO: deal with failure scenario
-    
-    var slug = owner + '/' + repo;
-    travisRequest("https://api.travis-ci.org/repos/" + slug + '/builds/' + buildId, function(data) {
-      console.log(data);
-      var commit = data.commit; 
-      
-      var activity = {
-        build_url: 'https://travis-ci.org/' + slug + '/builds/' + buildId,
-        owner: owner,
-        repo: repo,
-        sha: commit.sha,
-        author_name: commit.author_name,
-        committed_at: commit.committed_at
-      };
-      showActivity(activity);
-    });
-  }
   
   // Helper functions
   
