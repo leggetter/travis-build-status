@@ -12,6 +12,14 @@
       text-align: center;
     }
     
+    .author-name {
+      margin-right: 10px;
+    }
+    
+    .commit-sha {
+      display: block;
+    }
+    
     h1 {
       font-size: 16px;
     }
@@ -40,8 +48,9 @@
 
 <template id="build_activity">
   <div class="build-activity">
-    <a href="{{author_url}}">{{author_name}}</a> @ <a href="{{build_url}}">{{committed_at}}</a> | 
-    <a href="https://github.com/{{owner}}/{{repo}}/commit/{{sha}}">{{sha}}</a> 
+    <a href="{{author_url}}" class="author-name">{{author_name}}</a>
+    <a href="{{build_url}}" class="commit-time">{{committed_at}}</a>
+    <a href="https://github.com/{{owner}}/{{repo}}/commit/{{sha}}" class="commit-sha">{{sha}}</a> 
   </div>
 </template>
 
