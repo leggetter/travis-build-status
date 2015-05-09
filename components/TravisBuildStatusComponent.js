@@ -1,7 +1,5 @@
 ( function( currentScript ) {
 
-var PUSHER_CHANNEL_NAME_TMPL = '{{repo}}-builds';
-
 //var ServiceDependencies = {
 //	pusher: Pusher,
 //	travis: Travis
@@ -9,35 +7,33 @@ var PUSHER_CHANNEL_NAME_TMPL = '{{repo}}-builds';
 	
 var importDoc = currentScript.ownerDocument;
 
-var pusher,
-    buildChannel;
-
 var TravisBuildStatusElement = Object.create(HTMLElement.prototype);
 
 Object.defineProperty(TravisBuildStatusElement, "pusherAppKey", {
   get: function() {
     return this.getAttribute('pusher-app-key');
   }
- });
+});
  
- Object.defineProperty(TravisBuildStatusElement, "repoOwner", {
+Object.defineProperty(TravisBuildStatusElement, "repoOwner", {
   get: function() {
     return this.getAttribute('repo-owner');
   }
- });
+});
  
- Object.defineProperty(TravisBuildStatusElement, "repoName", {
+Object.defineProperty(TravisBuildStatusElement, "repoName", {
   get: function() {
     return this.getAttribute('repo-name');
   }
+});
+ 
+  Object.defineProperty(TravisBuildStatusElement, "debug", {
+  get: function() {
+    return this.getAttribute('debug');
+  }
  });
 
-TravisBuildStatusElement.createdCallback = function() {
-	// Get attributes
-  if(!this.pusherAppKey) {
-    throw new Error('A Pusher application key must be provided via the "pusher-app-key" attribute');
-  }
-    
+TravisBuildStatusElement.createdCallback = function() {    
   if(!this.repoOwner) {
     throw new Error('A "repo-owner" attribute must be provided');
   }
@@ -47,7 +43,6 @@ TravisBuildStatusElement.createdCallback = function() {
   }
   
   var cluster = this.getAttribute('pusher-cluster');
-  var debug = this.getAttribute('debug');
   
   this.templateParser = new TemplateParser();
   
@@ -65,68 +60,23 @@ TravisBuildStatusElement.createdCallback = function() {
   this.travisImgEl = this.containerEl.querySelector('#travis_image');
   this.buildActivitiesEl = this.containerEl.querySelector('#build_activity');
   
-	// Pusher setup
-//	if(debug !== null && debug !== 'false') {    
-//    Pusher.log = function(msg) {
-//      console.log(msg);
-//    };
-//  }
-//	
-//  pusher = new Pusher(appKey, {cluster: cluster});
-//  var channelName = PUSHER_CHANNEL_NAME_TMPL.replace('{{repo}}', repoName);
-//  buildChannel = pusher.subscribe(channelName);
-//  
-//  buildChannel.bind('Pending', function(data) {
-//    updateTravisImage();
-//    handleActivity(data);
-//  });
-//  
-//  buildChannel.bind('Passed', function(data) {
-//    updateTravisImage();
-//    handleActivity(data);
-//  });
-//  
-//  buildChannel.bind('Fixed', function(data) {
-//    updateTravisImage();
-//    handleActivity(data);
-//  });
-//  
-//  buildChannel.bind('Broken', function(data) {
-//    updateTravisImage();
-//    handleActivity(data);
-//  });
-//  
-//  buildChannel.bind('Failed', function(data) {
-//    updateTravisImage();
-//    handleActivity(data);
-//  });
-//  
-//  buildChannel.bind('Still Failing', function(data) {
-//    // Was already failing. No need to update image.
-//    handleActivity(data);
-//  });
-  
   var travis = new TravisAPI(this.repoOwner, this.repoName);
   travis.getPreviousActivity(this.showActivity.bind(this));
-};
-
-/**
- * Parse activity data from WebHook payload
- */
-TravisBuildStatusElement.handleActivity = function(data) {
-  var activity = {
-    build_url: data.build_url,
-    onwer: this.repoOwner,
-    repo: this.repoName,
-    sha: data.commit,
-    author_name: data.author_name,
-    committed_at: data.committed_at
-  };
-  this.showActivity(activity);
+  
+  if(this.pusherAppKey) {
+    var pusherUpdater = new PusherUpdater(this.repoOwner,
+                                          this.repoName, 
+                                          this.pusherAppKey, 
+                                          this.showActivity.bind(this), 
+                                          {
+                                            debug: this.debug,
+                                            cluser: cluster
+                                          });
+  }
 };
 
 TravisBuildStatusElement.showActivity = function(data) {
-  console.log(data);
+  if(this.debug) { console.log(data); }
   
   var content = importDoc.getElementById('build_activity').content;
   var activityEl = importDoc.importNode( content, true ).querySelector('.build-activity');
