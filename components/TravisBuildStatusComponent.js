@@ -9,9 +9,6 @@ var PUSHER_CHANNEL_NAME_TMPL = '{{repo}}-builds';
 	
 var importDoc = currentScript.ownerDocument;
 
-var repoOwner,
-    repoName;
-
 var pusher,
     buildChannel;
 
@@ -20,21 +17,38 @@ var containerEl,
     buildActivitiesEl;
 
 var TravisBuildStatusElement = Object.create(HTMLElement.prototype);
+
+Object.defineProperty(TravisBuildStatusElement, "pusherAppKey", {
+  get: function() {
+    return this.getAttribute('pusher-app-key');
+  }
+ });
+ 
+ Object.defineProperty(TravisBuildStatusElement, "repoOwner", {
+  get: function() {
+    return this.getAttribute('repo-owner');
+  }
+ });
+ 
+ Object.defineProperty(TravisBuildStatusElement, "repoName", {
+  get: function() {
+    return this.getAttribute('repo-name');
+  }
+ });
+
 TravisBuildStatusElement.createdCallback = function() {
 	// Get attributes
-  var appKey = this.getAttribute('pusher-app-key');
-  if(!appKey) {
+  if(!this.pusherAppKey) {
     throw new Error('A Pusher application key must be provided via the "pusher-app-key" attribute');
   }
-  
-  repoName = this.getAttribute('repo-name');
-  if(!repoName) {
-    throw new Error('A "repo-name" attribute must be provided');
+    
+
+  if(!this.repoOwner) {
+    throw new Error('A "repo-owner" attribute must be provided');
   }
   
-  repoOwner = this.getAttribute('repo-owner');
-  if(!repoOwner) {
-    throw new Error('A "repo-owner" attribute must be provided');
+  if(!this.repoName) {
+    throw new Error('A "repo-name" attribute must be provided');
   }
   
   var cluster = this.getAttribute('pusher-cluster');
@@ -47,7 +61,7 @@ TravisBuildStatusElement.createdCallback = function() {
   var containerClone = importDoc.importNode( containerContent, true );
   containerEl = containerClone.querySelector('.build-status-container');
   
-  var html = this.templateParser.parse(containerEl.innerHTML, { owner: repoOwner, repo: repoName });
+  var html = this.templateParser.parse(containerEl.innerHTML, { owner: this.repoOwner, repo: this.repoName });
   containerEl.innerHTML = html;
   
   this.shadow = this.createShadowRoot();
@@ -97,7 +111,7 @@ TravisBuildStatusElement.createdCallback = function() {
 //    handleActivity(data);
 //  });
   
-  var travis = new TravisAPI(repoOwner, repoName);
+  var travis = new TravisAPI(this.repoOwner, this.repoName);
   travis.getPreviousActivity(this.showActivity.bind(this));
 };
 
@@ -107,8 +121,8 @@ TravisBuildStatusElement.createdCallback = function() {
 TravisBuildStatusElement.handleActivity = function(data) {
   var activity = {
     build_url: data.build_url,
-    onwer: repoOwner,
-    repo: repoName,
+    onwer: this.repoOwner,
+    repo: this.repoName,
     sha: data.commit,
     author_name: data.author_name,
     committed_at: data.committed_at
