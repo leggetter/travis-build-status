@@ -1,0 +1,48 @@
+<script src="//js.pusher.com/3.0.0/pusher.min.js"></script>
+
+<template id="container">
+  <style>
+    :host {
+      display: inline-block;
+    }
+    
+    .build-status-container {
+      font-size: 14px;
+      min-width: 300px;
+      text-align: center;
+    }
+    
+    h1 {
+      font-size: 16px;
+    }
+  </style>
+  
+	<div class="build-status-container">
+    <header>
+		  <h1><a href="https://github.com/{{owner}}/{{repo}}">{{owner}}/{{repo}}</a></h1>
+      <img id="travis_image"
+           src="https://travis-ci.org/{{owner}}/{{repo}}.svg?"
+           title="Build status image for {{owner}}/{{repo}}"
+           alt="Build status image for {{owner}}/{{repo}}" />
+    </header>
+    <section>
+      <h2>Recent Activity</h2>
+      <div id="build_activity">
+        <p></p>
+      </div>
+    </section>
+    <footer>
+      Built by <a href="https://pusher.com">Pusher</a> with 🚀
+    </footer>
+	</div>
+	
+</template>
+
+<template id="build_activity">
+  <div class="build-activity">
+    <a href="{{author_url}}">{{author_name}}</a> @ <a href="{{build_url}}">{{committed_at}}</a> | 
+    <a href="https://github.com/{{owner}}/{{repo}}/commit/{{sha}}">{{sha}}</a> 
+  </div>
+</template>
+
+<script src="TravisBuildStatusComponent.js"></script>
