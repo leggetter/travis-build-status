@@ -12,10 +12,6 @@ var importDoc = currentScript.ownerDocument;
 var pusher,
     buildChannel;
 
-var containerEl,
-    travisImgEl,
-    buildActivitiesEl;
-
 var TravisBuildStatusElement = Object.create(HTMLElement.prototype);
 
 Object.defineProperty(TravisBuildStatusElement, "pusherAppKey", {
@@ -42,7 +38,6 @@ TravisBuildStatusElement.createdCallback = function() {
     throw new Error('A Pusher application key must be provided via the "pusher-app-key" attribute');
   }
     
-
   if(!this.repoOwner) {
     throw new Error('A "repo-owner" attribute must be provided');
   }
@@ -59,16 +54,16 @@ TravisBuildStatusElement.createdCallback = function() {
 	// Element setup
   var containerContent = importDoc.querySelector( '#container' ).content;
   var containerClone = importDoc.importNode( containerContent, true );
-  containerEl = containerClone.querySelector('.build-status-container');
+  this.containerEl = containerClone.querySelector('.build-status-container');
   
-  var html = this.templateParser.parse(containerEl.innerHTML, { owner: this.repoOwner, repo: this.repoName });
-  containerEl.innerHTML = html;
+  var html = this.templateParser.parse(this.containerEl.innerHTML, { owner: this.repoOwner, repo: this.repoName });
+  this.containerEl.innerHTML = html;
   
   this.shadow = this.createShadowRoot();
   this.shadow.appendChild( containerClone );
   
-  travisImgEl = containerEl.querySelector('#travis_image');
-  buildActivitiesEl = containerEl.querySelector('#build_activity');
+  this.travisImgEl = this.containerEl.querySelector('#travis_image');
+  this.buildActivitiesEl = this.containerEl.querySelector('#build_activity');
   
 	// Pusher setup
 //	if(debug !== null && debug !== 'false') {    
@@ -136,14 +131,14 @@ TravisBuildStatusElement.showActivity = function(data) {
   var content = importDoc.getElementById('build_activity').content;
   var activityEl = importDoc.importNode( content, true ).querySelector('.build-activity');
   activityEl.innerHTML = this.templateParser.parse(activityEl.innerHTML, data);
-  buildActivitiesEl.insertBefore(activityEl, buildActivitiesEl.firstChild);
+  this.buildActivitiesEl.insertBefore(activityEl, this.buildActivitiesEl.firstChild);
 };
 
 TravisBuildStatusElement.updateTravisImage = function() {
   // append time-based query string to force refresh
-  var src = travisImgEl.getAttribute('src');
+  var src = this.travisImgEl.getAttribute('src');
   src = src.replace(/\?.*/, '?' + Date.now());
-  travisImgEl.setAttribute('src', src);
+  this.travisImgEl.setAttribute('src', src);
 };
 
 document.registerElement('travis-build-status', {
