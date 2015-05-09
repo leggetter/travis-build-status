@@ -40,12 +40,14 @@ TravisBuildStatusElement.createdCallback = function() {
   var cluster = this.getAttribute('pusher-cluster');
   var debug = this.getAttribute('debug');
   
+  this.templateParser = new TemplateParser();
+  
 	// Element setup
   var containerContent = importDoc.querySelector( '#container' ).content;
   var containerClone = importDoc.importNode( containerContent, true );
   containerEl = containerClone.querySelector('.build-status-container');
   
-  var html = parseTemplate(containerEl.innerHTML, { owner: repoOwner, repo: repoName });
+  var html = this.templateParser.parse(containerEl.innerHTML, { owner: repoOwner, repo: repoName });
   containerEl.innerHTML = html;
   
   this.shadow = this.createShadowRoot();
@@ -96,59 +98,42 @@ TravisBuildStatusElement.createdCallback = function() {
 //  });
   
   var travis = new TravisAPI(repoOwner, repoName);
-  travis.getPreviousActivity(showActivity);
+  travis.getPreviousActivity(this.showActivity.bind(this));
 };
 
+/**
+ * Parse activity data from WebHook payload
+ */
+TravisBuildStatusElement.handleActivity = function(data) {
+  var activity = {
+    build_url: data.build_url,
+    onwer: repoOwner,
+    repo: repoName,
+    sha: data.commit,
+    author_name: data.author_name,
+    committed_at: data.committed_at
+  };
+  this.showActivity(activity);
+};
 
+TravisBuildStatusElement.showActivity = function(data) {
+  console.log(data);
   
+  var content = importDoc.getElementById('build_activity').content;
+  var activityEl = importDoc.importNode( content, true ).querySelector('.build-activity');
+  activityEl.innerHTML = this.templateParser.parse(activityEl.innerHTML, data);
+  buildActivitiesEl.insertBefore(activityEl, buildActivitiesEl.firstChild);
+};
+
+TravisBuildStatusElement.updateTravisImage = function() {
+  // append time-based query string to force refresh
+  var src = travisImgEl.getAttribute('src');
+  src = src.replace(/\?.*/, '?' + Date.now());
+  travisImgEl.setAttribute('src', src);
+};
+
+document.registerElement('travis-build-status', {
+  prototype: TravisBuildStatusElement
+});
   
-  
-  // Helper functions
-  
-  function parseTemplate(templateStr, tokens) {
-    var regex;
-    for(var token in tokens) {
-      console.log(token, tokens[token]);
-      regex = new RegExp('{{' + token + '}}', 'g');
-      console.log(regex);
-      templateStr = templateStr.replace(regex, tokens[token]);
-    }
-    return templateStr;
-  }
-  
-  /**
-   * Parse activity data from WebHook payload
-   */
-  function handleActivity(data) {
-    var activity = {
-      build_url: data.build_url,
-      onwer: repoOwner,
-      repo: repoName,
-      sha: data.commit,
-      author_name: data.author_name,
-      committed_at: data.committed_at
-    };
-    showActivity(activity);
-  }
-  
-  function showActivity(data) {
-    console.log(data);
-    
-    var content = importDoc.getElementById('build_activity').content;
-    var activityEl = importDoc.importNode( content, true ).querySelector('.build-activity');
-    activityEl.innerHTML = parseTemplate(activityEl.innerHTML, data);
-    buildActivitiesEl.insertBefore(activityEl, buildActivitiesEl.firstChild);
-  }
-  
-  function updateTravisImage() {
-    // append time-based query string to force refresh
-    var src = travisImgEl.getAttribute('src');
-    src = src.replace(/\?.*/, '?' + Date.now());
-    travisImgEl.setAttribute('src', src);
-  }
-  
-  document.registerElement('travis-build-status', {
-    prototype: TravisBuildStatusElement
-  });
-  
-  } )( document._currentScript || document.currentScript );
+} )( document._currentScript || document.currentScript );
