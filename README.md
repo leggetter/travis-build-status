@@ -6,3 +6,6 @@ Display the Travis CI build status of your GitHub repo. Travis badge, latest com
 
 [View the live demo](docs/example.html)
 
+## Screenshot
+
+![](docs/img/travis-build-status-component.png)
